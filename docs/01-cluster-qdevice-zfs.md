@@ -140,23 +140,6 @@ Depuis le navigateur Windows 11 : `http://[IP-conteneur]`
 
 ---
 
-## 4. Pourquoi ne pas cloner pve1
-
-> ⚠️ **Cloner pve1 pour créer pve2 est une mauvaise pratique.**
-
-Raisons techniques :
-
-| Problème | Explication |
-|----------|-------------|
-| UUID dupliqué | Proxmox stocke un identifiant unique par nœud — deux nœuds identiques créent des conflits dans le cluster |
-| Fingerprint SSH | Les certificats SSH sont uniques à chaque machine |
-| Adresses MAC | Les MACs dupliquées causent des conflits réseau |
-| Certificats TLS | L'interface web Proxmox utilise des certificats propres à chaque nœud |
-
-**La bonne approche** : installer Proxmox from scratch sur une nouvelle VM, puis joindre les deux nœuds dans un cluster.
-
----
-
 ## 5. Création de la VM pve2 dans VMware
 
 ### Configuration identique à pve1
@@ -215,21 +198,9 @@ ping -c 3 192.168.75.149
 
 ## 7. Création du cluster Proxmox sur pve1
 
-### Première tentative — Nom trop long
 
-```bash
-pvecm create ministere-cluster
-```
+**Attention** : Proxmox limite le nom du cluster à 15 caractères maximum.
 
-**Erreur obtenue :**
-```
-400 Parameter verification failed.
-clustername: value may only be 15 characters long
-```
-
-**Cause** : Proxmox limite le nom du cluster à 15 caractères maximum.
-
-### Correction — Nom raccourci
 
 ```bash
 pvecm create clusterMINFOPRA
@@ -283,30 +254,12 @@ Highest expected: 2
 
 > ✅ pve2 a rejoint le cluster. Les deux nœuds apparaissent dans le panneau gauche de l'interface web sous **Datacenter (clusterMINFOP...)**.
 
----
-
-## 9. Tentative de migration — Problème stockage partagé
-
-### Test de migration du CT 400 vers pve2
-
-```bash
-pct migrate 400 pve2 --restart
-```
-
-**Erreur obtenue :**
-```
-cannot open 'local-zfs': dataset does not exist
-cannot receive new filesystem stream: unable to restore to destination
-storage migration for 'local-zfs:subvol-400-disk-0' to storage 'local-zfs' failed
-migration aborted
-```
-
-### Analyse
-Les deux nœuds ont chacun leur propre `local-zfs` **séparé et local**. Sans stockage partagé entre pve1 et pve2, la migration de VMs et la haute disponibilité sont impossibles.
 
 ---
 
 ## 10. Choix du stockage partagé — Analyse et décision
+
+Les deux nœuds ont chacun leur propre `local-zfs` **séparé et local**. Sans stockage partagé entre pve1 et pve2, la migration de VMs et la haute disponibilité sont impossibles.
 
 ### Comparaison des solutions
 
@@ -333,7 +286,7 @@ pve1 (local-zfs) ←── ZFS Replication ──→ pve2 (local-zfs)
                      (VM Debian légère)
 ```
 
-**ZFS Replication** : chaque nœud garde sa propre copie des données, synchronisées toutes les 15 minutes. Pas de SPOF car les données sont sur les deux nœuds.
+**ZFS Replication** : chaque nœud garde sa propre copie des données, synchronisées toutes les 05 minutes. Pas de SPOF car les données sont sur les deux nœuds.
 
 **QDevice** : un 3ème équipement très léger (simple VM Debian) qui sert uniquement d'arbitre de vote. En cas de panne d'un nœud, le QDevice fournit le vote manquant pour maintenir le quorum.
 
@@ -349,7 +302,7 @@ pve1 (local-zfs) ←── ZFS Replication ──→ pve2 (local-zfs)
 │  ├── VM 300 (Windows10)   ├── [réplique VM 300]        │
 │  └── CT 400 (nginx)       └── [réplique CT 400]        │
 │           │                        │                    │
-│           └──── ZFS Replication ───┘  (toutes 15 min)  │
+│           └──── ZFS Replication ───┘  (toutes 05 min)  │
 │                      │                                  │
 │              QDevice (192.168.75.160)                   │
 │              (arbitre de quorum)                        │
@@ -410,14 +363,6 @@ Résultat attendu : `active (running)` ✅
 
 ### Étape 4 — Installer SSH sur le QDevice
 
-> ⚠️ **Problème rencontré** : SSH n'était pas installé sur le QDevice par défaut lors de l'installation minimale Debian. Proxmox ne pouvait donc pas s'y connecter.
-
-**Erreur obtenue depuis pve1 :**
-```
-/bin/ssh-copy-id: ERROR: ssh: connect to host 192.168.75.160 port 22: Connection refused
-```
-
-**Solution :**
 ```bash
 apt install -y openssh-server
 systemctl enable ssh
@@ -426,14 +371,6 @@ systemctl start ssh
 
 ### Étape 5 — Autoriser la connexion SSH root
 
-> ⚠️ **Problème rencontré** : SSH refusait la connexion root avec mot de passe (comportement par défaut Debian sécurisé).
-
-**Erreur obtenue depuis pve1 :**
-```
-root@192.168.75.160's password: Permission denied, please try again.
-```
-
-**Solution :**
 ```bash
 sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 systemctl restart ssh
@@ -529,7 +466,7 @@ Nodeid     Votes  Qdevice  Name
 ## 14. Configuration de la ZFS Replication
 
 ### Objectif
-Répliquer automatiquement les disques des VMs/CTs de pve1 vers pve2 toutes les 15 minutes, afin que pve2 dispose toujours d'une copie récente des données.
+Répliquer automatiquement les disques des VMs/CTs de pve1 vers pve2 toutes les 05 minutes, afin que pve2 dispose toujours d'une copie récente des données.
 
 ### Configurer la réplication via l'interface web
 
@@ -542,7 +479,7 @@ Répliquer automatiquement les disques des VMs/CTs de pve1 vers pve2 toutes les 
 | Champ | Valeur |
 |-------|--------|
 | Target Node | pve2 |
-| Schedule | `*/15` |
+| Schedule | `*/05` |
 | Rate limit | vide |
 
 4. Cliquer **Create**
@@ -560,8 +497,8 @@ pvesr list
 Résultat attendu :
 ```
 JobID    Target      Schedule   Rate   Enabled
-300-0    local/pve2  */15       -      yes
-400-0    local/pve2  */15       -      yes
+300-0    local/pve2  */05       -      yes
+400-0    local/pve2  */05       -      yes
 ```
 
 ---
@@ -709,8 +646,8 @@ Résultat attendu dans l'interface :
 
 | Guest | Job | Target | Status | Last Sync | Schedule |
 |-------|-----|--------|--------|-----------|----------|
-| 300 | 0 | pve2 | ✅ OK | horodatage | */15 |
-| 400 | 0 | pve2 | ✅ OK | horodatage | */15 |
+| 300 | 0 | pve2 | ✅ OK | horodatage | */05 |
+| 400 | 0 | pve2 | ✅ OK | horodatage | */05 |
 
 > ✅ La réplication ZFS est opérationnelle. pve2 reçoit une copie des données toutes les 15 minutes.
 
