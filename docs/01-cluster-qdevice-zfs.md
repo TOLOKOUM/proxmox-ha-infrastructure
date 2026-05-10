@@ -14,27 +14,26 @@
 1. [Architecture cible](#1-architecture-cible)
 2. [Prérequis et état initial](#2-prérequis-et-état-initial)
 3. [Création du conteneur LXC Nginx sur pve1](#3-création-du-conteneur-lxc-nginx-sur-pve1)
-4. [Pourquoi ne pas cloner pve1](#4-pourquoi-ne-pas-cloner-pve1)
-5. [Création de la VM pve2 dans VMware](#5-création-de-la-vm-pve2-dans-vmware)
-6. [Installation de Proxmox VE sur pve2](#6-installation-de-proxmox-ve-sur-pve2)
-7. [Création du cluster Proxmox sur pve1](#7-création-du-cluster-proxmox-sur-pve1)
-8. [Jonction de pve2 au cluster](#8-jonction-de-pve2-au-cluster)
-9. [Tentative de migration — Problème stockage partagé](#9-tentative-de-migration--problème-stockage-partagé)
-10. [Choix du stockage partagé — Analyse et décision](#10-choix-du-stockage-partagé--analyse-et-décision)
-11. [Architecture finale retenue](#11-architecture-finale-retenue)
-12. [Configuration du QDevice](#12-configuration-du-qdevice)
-13. [Vérification du cluster et du QDevice](#13-vérification-du-cluster-et-du-qdevice)
-14. [Configuration de la ZFS Replication](#14-configuration-de-la-zfs-replication)
-15. [Problème — Pool ZFS inexistant sur pve2](#15-problème--pool-zfs-inexistant-sur-pve2)
-16. [Résolution — Création du pool ZFS sur pve2](#16-résolution--création-du-pool-zfs-sur-pve2)
-17. [Relance et validation de la réplication](#17-relance-et-validation-de-la-réplication)
-18. [Migration live d'un conteneur](#18-migration-live-dun-conteneur)
-19. [Configuration de la Haute Disponibilité HA](#19-configuration-de-la-haute-disponibilité-ha)
-20. [Problème — Services HA gelés freeze](#20-problème--services-ha-gelés-freeze)
-21. [Test de panne — Simulation crash de pve1](#21-test-de-panne--simulation-crash-de-pve1)
-22. [Résultat du test HA](#22-résultat-du-test-ha)
-23. [Tableau récapitulatif des problèmes rencontrés](#23-tableau-récapitulatif-des-problèmes-rencontrés)
-24. [Architecture finale validée](#24-architecture-finale-validée)
+6. [Création de la VM pve2 dans VMware](#5-création-de-la-vm-pve2-dans-vmware)
+7. [Installation de Proxmox VE sur pve2](#6-installation-de-proxmox-ve-sur-pve2)
+8. [Création du cluster Proxmox sur pve1](#7-création-du-cluster-proxmox-sur-pve1)
+9. [Jonction de pve2 au cluster](#8-jonction-de-pve2-au-cluster)
+10. [Tentative de migration — Problème stockage partagé](#9-tentative-de-migration--problème-stockage-partagé)
+11. [Choix du stockage partagé — Analyse et décision](#10-choix-du-stockage-partagé--analyse-et-décision)
+12. [Architecture finale retenue](#11-architecture-finale-retenue)
+13. [Configuration du QDevice](#12-configuration-du-qdevice)
+14. [Vérification du cluster et du QDevice](#13-vérification-du-cluster-et-du-qdevice)
+15. [Configuration de la ZFS Replication](#14-configuration-de-la-zfs-replication)
+16. [Problème — Pool ZFS inexistant sur pve2](#15-problème--pool-zfs-inexistant-sur-pve2)
+17. [Résolution — Création du pool ZFS sur pve2](#16-résolution--création-du-pool-zfs-sur-pve2)
+18. [Relance et validation de la réplication](#17-relance-et-validation-de-la-réplication)
+19. [Migration live d'un conteneur](#18-migration-live-dun-conteneur)
+20. [Configuration de la Haute Disponibilité HA](#19-configuration-de-la-haute-disponibilité-ha)
+21. [Problème — Services HA gelés freeze](#20-problème--services-ha-gelés-freeze)
+22. [Test de panne — Simulation crash de pve1](#21-test-de-panne--simulation-crash-de-pve1)
+23. [Résultat du test HA](#22-résultat-du-test-ha)
+24. [Tableau récapitulatif des problèmes rencontrés](#23-tableau-récapitulatif-des-problèmes-rencontrés)
+25. [Architecture finale validée](#24-architecture-finale-validée)
 
 ---
 
@@ -649,7 +648,7 @@ Résultat attendu dans l'interface :
 | 300 | 0 | pve2 | ✅ OK | horodatage | */05 |
 | 400 | 0 | pve2 | ✅ OK | horodatage | */05 |
 
-> ✅ La réplication ZFS est opérationnelle. pve2 reçoit une copie des données toutes les 15 minutes.
+> ✅ La réplication ZFS est opérationnelle. pve2 reçoit une copie des données toutes les 05 minutes.
 
 ---
 
