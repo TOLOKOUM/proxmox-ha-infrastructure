@@ -38,7 +38,7 @@ Ce projet documente la mise en place d'une infrastructure de virtualisation **ha
 ---
 
 ## 🏗️ Architecture finale
-![Architecture HA Proxmox](./architecture-finale.png)
+![Architecture HA Proxmox](./images/architecture-finale.png)
 
 ### Flux de protection
 
