@@ -38,28 +38,7 @@ Ce projet documente la mise en place d'une infrastructure de virtualisation **ha
 ---
 
 ## 🏗️ Architecture finale
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                  Datacenter clusterMINFOPRA                  │
-│                                                              │
-│  pve1 (192.168.75.149)        pve2 (192.168.75.158)         │
-│  ├── VM 300 (Windows10VM)     └── CT 400 (nginx-server)     │
-│  │                                                           │
-│  ├── sdb 50G (ZFS — ISOs/backups locaux)                    │
-│  └── sdc 50G (Ceph OSD) ◄───► sdc 50G (Ceph OSD)           │
-│              │                            │                  │
-│              └──── vm-pool (100 GiB) ─────┘                  │
-│                    Stockage partagé Ceph                     │
-│                                                              │
-│           QDevice (192.168.75.160)                           │
-│           Arbitre de quorum — anti split-brain               │
-│                                                              │
-│           PBS (192.168.75.161:8007)                          │
-│           Backup quotidien 23h00                             │
-│           Rétention : 7j / 4sem / 3mois                      │
-└─────────────────────────────────────────────────────────────┘
-```
+![Architecture HA Proxmox](./architecture-finale.png)
 
 ### Flux de protection
 
